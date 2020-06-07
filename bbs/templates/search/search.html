@@ -1,0 +1,83 @@
+{% extends 'base_index.html' %}
+{% load my_filters %}
+{% block title %}个人博客-搜索结果{% endblock title %}
+{% block slide %}{% endblock slide %}
+{% block article %}
+    {# 文章 #}
+    <div class="keyword">关键词: <b>{{ query }}</b></div>
+    {% for article in page %}
+    <div class="article">
+        <div class="article_header">
+            <span class="article_tag">{{ article.object.sort.name }}</span>
+            <h3 class="article_title"><a href="{% url 'my_bbs:detail' article.object.id %}">{{ article.object.title }}</a></h3>
+        </div>
+        <div class="article_main">
+            <a href="{% url 'my_bbs:detail' article.object.id %}" class="thumbnail article_cover">
+                  <img src="{{ article.object.image.url }}" alt="缩略图">
+            </a>
+            <p class="desc">{{ article.object.desc }}</p>
+        </div>
+        <div class="article_info">
+            <div class="author pull-right">
+                <span class="glyphicon glyphicon-user"></span>
+                <span>{{ article.object.author.username }}</span>
+            </div>
+            <div class="comment pull-right">
+                <span class="glyphicon glyphicon-bullhorn"></span>
+                <span>{{ article.object.comment_num }}</span>
+            </div>
+            <div class="up pull-right">
+                <span class="glyphicon glyphicon-heart"></span>
+                <span>{{ article.object.up_num }}</span>
+            </div>
+            <div class="read pull-right">
+                <span class="glyphicon glyphicon-eye-open"></span>
+                <span>{{ article.object.read_num }}</span>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+        <div  class="article" style="height: auto; padding: 20px">
+            暂时没有文章
+        </div>
+    {% endfor %}
+
+    {# 分页 #}
+    <nav aria-label="Page navigation" style="text-align: center">
+      <ul class="pagination">
+        {% if page.has_previous %}
+          <li>
+                <a href="{% url 'search:haystack_search' %}?q={{ query }}&page={{ page.previous_page_number }}" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+        {% else %}
+            <li class="disabled">
+                <span aria-hidden="true">&laquo;</span>
+            </li>
+        {% endif %}
+
+          {% for pindex in paginator|tran_to_page_range:page.number %}
+              {% if pindex == page.number %}
+                  <li class="active"><a>{{ pindex }}</a></li>
+              {% else %}
+                  <li><a href="{% url 'search:haystack_search' %}?q={{ query }}&page={{ pindex }}">{{ pindex }}</a></li>
+              {% endif %}
+          {% endfor %}
+
+        {% if page.has_next %}
+            <li>
+                <a href="{% url 'search:haystack_search' %}?q={{ query }}&page={{ page.next_page_number }}" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+        {% else %}
+            <li class="disabled">
+                <span aria-hidden="true">&raquo;</span>
+            </li>
+        {% endif %}
+
+
+      </ul>
+    </nav>
+{% endblock article %}

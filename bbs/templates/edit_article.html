@@ -1,0 +1,248 @@
+{% extends 'base_main.html' %}
+{% load staticfiles %}
+{% block title %}个人博客-编辑博文{% endblock title %}
+{% block topfile %}
+    <link rel="stylesheet" href="{% static 'css/editormd.min.css' %}">
+    <script src="{% static 'js/editormd.min.js' %}"></script>
+    <script>
+        $(function () {
+            // 更改提交的默认行为
+            $('#submitBtn').click(function () {
+                var myForm = $('#new_article_form')[0];
+                var formData = new FormData(myForm);
+
+                $.ajax({
+                    url: '/edit_article/'+$('input[name=aid]').val(),
+                    type: 'post',
+                    data: formData,
+                    contentType: false,
+                    processData: false
+                })
+                .done(function (result) {
+                    if(result.code === 8)
+                    {
+                        //成功
+                        alert('更新成功!');
+                        window.location.href = result.dir_url;
+                    }
+                    else
+                    {
+                        alert(result.errmsg);
+                    }
+                })
+                .fail(function () {
+                    alert('服务器连接超时');
+                });
+
+                return false;
+            });
+
+            // 添加分类
+            //弹出弹框
+            $('#add_sort').click(function () {
+                $('.pop_sort input[name=sort_name]').val('');
+                $('.pop_sort textarea[name=desc]').val('');
+                $('.pop_sort option[value=-1]').prop('selected', 'selected');
+                $('.pop_sort').show();
+            });
+
+            //关闭弹窗
+            $('.exit').click(function () {
+                $('.pop_con').hide();
+            });
+
+            $('.pop_con').click(function () {
+                $('.pop_con').hide();
+            });
+
+            // 阻止事件冒泡
+            $('.pop_main').click(function () {
+                return false;
+            });
+
+            // 创建/编辑分类
+            $('.submitSort').click(function () {
+                var $sortName = $('.pop_sort input[name=sort_name]').val();
+                var $sortDesc = $('.pop_sort textarea[name=desc]').val();
+                var $parentId = $('.pop_sort select[name=parent]').val();
+                var $sortId = $('#pop_sort_id').val();
+                var send_data = {
+                    'sort_name': $sortName,
+                    'sort_desc': $sortDesc,
+                    'parent_id': $parentId,
+                    'sort_id': $sortId,
+                    'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+                };
+
+                // 创建新分类
+                $.post('/create_sort', send_data, function (result) {
+                    if (result.code === 5) {
+                        //成功
+                        $('.pop_con').hide();
+                        // 添加新分类选项
+                        var newSort = $('<option selected value="'+result.sid+'">'+$sortName+'</option>');
+                        $('select[name=sort]').append(newSort);
+                    } else {
+                        alert(result.errmsg);
+                    }
+                });
+            });
+
+            // 添加标签
+            // 弹框
+            $('#add_tag').click(function () {
+                $('.pop_main input[name=tag_name]').val('');
+                $('.pop_main textarea[name=desc]').val('');
+                $('#pop_sort_id').val('-1');
+                $('.pop_tag').show();
+            });
+
+            $('.submitTag').click(function () {
+                var $tagName = $('.pop_tag input[name=tag_name]').val();
+                var $tagDesc = $('.pop_tag textarea[name=desc]').val();
+                var $tagId = $('#pop_tag_id').val();
+                var send_data = {
+                    'tag_name': $tagName,
+                    'tag_desc': $tagDesc,
+                    'tag_id': $tagId,
+                    'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+                };
+
+                // 新建标签
+                var requestUrl = '/create_tag';
+
+                $.post(requestUrl, send_data, function (result) {
+                    if(result.code === 5)
+                    {
+                        //成功
+                        $('.pop_con').hide();
+                        var newTag = $('<label class="checkbox-inline">\n' +
+                            ' <input type="checkbox" value="'+result.tid+'" name="tag" checked>'+$tagName+'\n' +
+                            ' </label>');
+
+                        $('.tags_con').append(newTag);
+                    }
+                    else
+                    {
+                        alert(result.errmsg);
+                    }
+                });
+
+            });
+
+            // markdown
+            editormd("content-editormd", {
+                width   : "100%",
+                height  : 1000,
+                syncScrolling : "single",
+                path    : "/lib/",
+                saveHTMLToTextarea : true, // 保存HTML到Textarea
+                // 图片上传
+                imageUpload : true,
+                imageFormats: ["jpg","jpeg","gif","png","bmp","webp"],
+                imageUploadURL: "/file/upload",
+            });
+
+        });
+    </script>
+{% endblock topfile %}
+{% block main %}
+    <div class="container">
+        <div class="new_article">
+            <h3 class="clearfix"><span>新建博文</span></h3>
+            <form action="" class="new_article_form" id="new_article_form" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="">文章标题</label>
+                    <input type="text" class="form-control" name="title" value="{{ article.title }}">
+                </div>
+                <div class="form-group">
+                    <label for="">文章简介</label>
+                    <textarea name="desc" id="" cols="30" rows="10" class="form-control">{{ article.desc }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="">文章封面</label>
+                    <div class="thumbnail edit_cover">
+                        <img src="{{ article.image.url }}" alt="文章封面">
+                    </div>
+                    <input type="file" name="cover">
+                </div>
+                <div class="form-group">
+                    <label for="">文章分类</label>
+                    <a href="javascript:;" id="add_sort"><span class="glyphicon glyphicon-plus" style="text-indent: 10px"></span></a>
+                    <select name="sort" id="" class="form-control">
+                        {% for sort in all_sorts %}
+                            <option value="{{ sort.id }}" {% if sort == article.sort %}selected{% endif %}>{{ sort.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="">文章标签</label>
+                    <a href="javascript:;" id="add_tag"><span class="glyphicon glyphicon-plus" style="text-indent: 10px"></span></a>
+                    <div class="tags_con">
+                        {% for tag in tags %}
+                            <label class="checkbox-inline">
+                                <input type="checkbox" value="{{ tag.id }}" name="tag" {% if tag in article.tag_set.all %}checked{% endif %}> {{ tag.name }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <input type="hidden" name="aid" value="{{ article.id }}">
+                <div class="form-group">
+                    <label for="">文章内容</label>
+{#                    <textarea name="content" id="" cols="30" rows="10" class="form-control">{% autoescape off %}{{ article.article_detail.content }}{% endautoescape %}</textarea>#}
+                    <div id="content-editormd">
+                        <textarea style="display:none;" class="form-control" id="content-editormd-markdown-doc" name="content-editormd-markdown-doc">{{ article.article_detail.content }}</textarea>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top: 10px" id="submitBtn">提交博文</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# 弹窗: 新增分类 #}
+    <div class="pop_con pop_sort">
+        <div class="mask"></div>
+        <div class="pop_main container">
+            <h3><span>新建/编辑分类</span></h3>
+            <div class="form-group">
+                <label for="">分类名</label>
+                <input type="text" class="form-control" name="sort_name">
+            </div>
+            <div class="form-group">
+                <label for="">简介</label>
+                <textarea name="desc" id="" cols="30" rows="10" class="form-control"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="">父级分类</label>
+                <select name="parent" id="" class="form-control">
+                    <option value="-1">无</option>
+                    {% for sort in sorts %}
+                        <option value="{{ sort.id }}">{{ sort.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button class="exit btn btn-danger"><span class="glyphicon glyphicon-remove"></span></button>
+            <button class="btn btn-primary submitSort">提交</button>
+        </div>
+    </div>
+
+    {# 弹窗: 新增标签 #}
+    <div class="pop_con pop_tag">
+        <div class="mask"></div>
+        <div class="pop_main container">
+            <h3><span>新建/编辑标签</span></h3>
+            <div class="form-group">
+                <label for="">标签名</label>
+                <input type="text" class="form-control" name="tag_name">
+            </div>
+            <div class="form-group">
+                <label for="">简介</label>
+                <textarea name="desc" id="" cols="30" rows="10" class="form-control"></textarea>
+            </div>
+            <input type="hidden" id="pop_tag_id" value="-1">
+            <button class="exit btn btn-danger"><span class="glyphicon glyphicon-remove"></span></button>
+            <button class="btn btn-primary submitTag">提交</button>
+        </div>
+    </div>
+{% endblock main %}

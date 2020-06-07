@@ -1,0 +1,129 @@
+{% extends 'base_center.html' %}
+{% load my_filters %}
+{% block topfile %}
+    <script>
+        $(function () {
+            // 删除
+            $('.article_opt .del').click(function () {
+                var $cid = $(this).attr('cid');
+                var send_data = {
+                    'cid': $cid,
+                    'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+                };
+
+                $.post('/del_comment', send_data, function (result) {
+                    if(result.code === 4)
+                    {
+                        alert('删除成功!');
+                        window.location.reload();
+                    }
+                    else
+                    {
+                        alert(result.errmsg);
+                    }
+                });
+            });
+
+            //置顶
+            $('.article_opt .to_top').click(function () {
+                var $cid = $(this).prev().attr('cid');
+                var send_data = {
+                    'cid': $cid,
+                    'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+                };
+
+                $.post('/top_comment', send_data, function (result) {
+                    if(result.code === 4)
+                    {
+                        alert('置顶成功!');
+                        window.location.reload();
+                    }
+                    else
+                    {
+                        alert(result.errmsg);
+                    }
+                });
+
+            });
+
+            //取消置顶
+            $('.article_opt .down_top').click(function () {
+                var $cid = $(this).prev().attr('cid');
+                var send_data = {
+                    'cid': $cid,
+                    'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+                };
+
+                $.post('/down_comment', send_data, function (result) {
+                    if(result.code === 4)
+                    {
+                        alert('取消置顶成功!');
+                        window.location.reload();
+                    }
+                    else
+                    {
+                        alert(result.errmsg);
+                    }
+                });
+
+            });
+
+            // 按分类显示
+            $('.sort_select').change(function () {
+                window.location.href = '/center/comment?sort_id='+$(this).val();
+                {#alert($(this).val());#}
+            });
+
+        });
+    </script>
+{% endblock topfile %}
+{% block center_main %}
+    <div class="center_main clearfix">
+        <h3 class="clearfix"><span>评论管理</span></h3>
+
+        <div class="opt clearfix">
+{#            <h4 class="opt_title pull-left">筛选</h4>#}
+            <select class="form-control pull-left sort_select">
+              <option value="-1">--分类--</option>
+                {% for sort in all_sorts %}
+                  <option {% if sort.id == sort_id %}selected{% endif %} value="{{ sort.id }}">{{ sort.name }}</option>
+                {% endfor %}
+            </select>
+            <div class="opt_search pull-left">
+                <div class="input-group">
+                    <input type="text" class="form-control">
+                    <div class="input-group-btn">
+                        <button class="btn btn-default"><span class="glyphicon glyphicon-search"></span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% csrf_token %}
+        {% for comment in comments %}
+        <div class="article_list">
+            <div class="article_list_main pull-left">
+                <div class="clearfix">
+                    <h3 class="article_title pull-left"><a href="{% url 'my_bbs:detail' comment.article.id %}"><b>{{ forloop.counter|double }}</b>{{ comment.article.title }}</a></h3>
+                    {% if comment.weight == 99 %}<span class="article_tag">置顶</span>{% endif %}
+
+                </div>
+                <div class="article_desc">
+                    {{ comment.content }}
+                </div>
+            </div>
+            <div class="article_opt">
+                <a class="btn btn-danger pull-right del" href="javascript:;" cid="{{ comment.id }}">删除</a>
+                {% if comment.weight == 0 %}
+                    <a class="btn btn-primary pull-right to_top" href="javascript:;">置顶</a>
+                {% elif comment.weight == 99 %}
+                    <a class="btn btn-primary pull-right down_top" href="javascript:;">取消置顶</a>
+                {% endif %}
+                <a class="btn btn-default pull-right read" href="{% url 'my_bbs:detail' comment.article.id %}">查看</a>
+            </div>
+        </div>
+        {% empty %}
+            <div class="article_list">暂时没有数据</div>
+        {% endfor %}
+    </div>
+
+{% endblock center_main %}

@@ -1,0 +1,168 @@
+{% extends 'base_center.html' %}
+{% block topfile %}
+    <script>
+        $(function () {
+            // 删除
+            $('.promotion_del').click(function () {
+                var $pid = $(this).attr('pid');
+                var send_data = {
+                    'pid': $pid,
+                    'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+                };
+
+                $.post('/del_promotion', send_data, function (result) {
+                    if(result.code === 4)
+                    {
+                        alert('删除成功!');
+                        window.location.reload();
+                    }
+                    else
+                    {
+                        alert(result.errmsg);
+                    }
+                });
+            });
+
+            // 弹出弹框
+            $('#create_promotion').click(function () {
+                $('.pop_main input[name=article_title]').val('');
+                $('#pop_pro_id').val('-1');
+                $('.pop_main .index').val('');
+                $('.pop_con').show();
+            });
+
+            //关闭弹窗
+            $('.exit').click(function () {
+                $('.pop_con').hide();
+            });
+
+            $('.pop_con').click(function () {
+                $('.pop_con').hide();
+            });
+
+            // 阻止事件冒泡
+            $('.pop_main').click(function (event) {
+                event.stopPropagation();
+            });
+
+            // 创建/编辑轮播图
+            $('#pop_submit_btn').click(function () {
+                var formData = new FormData();
+                formData.append('pid', $('#pop_pro_id').val());
+                formData.append('pro_img', $('#pro_img')[0].files[0]);
+                formData.append('index', $('.pop_main .index').val());
+                formData.append('aid', $('.pop_main select[name=article]').val());
+                formData.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val());
+
+                var requestUrl = '/create_promotion';
+                if($('#pop_pro_id').val() !== '-1')
+                {
+                    //编辑轮播图
+                    requestUrl = '/edit_promotion';
+                }
+
+                $.ajax({
+                    url: requestUrl,
+                    type: 'post',
+                    data: formData,
+                    contentType: false,  //关键是要设置contentType 为false，不然发出的请求头 没有boundar, 该参数是让jQuery去判断contentType
+                    processData: false   //默认为true, 表示不对数据进行序列化直接上传
+                })
+                .done(function (result) {
+                    if(result.code === 7)
+                    {
+                        $('.pop_con').hide();
+                        window.location.reload();
+                    }
+                    else
+                    {
+                        alert(result.errmsg);
+                    }
+                })
+                .fail(function () {
+                    alert('服务器连接超时!');
+                });
+
+            });
+
+            // 显示编辑
+            $('.promotion_edit').click(function () {
+                var $aId = $(this).attr('aid');
+                var $pId = $(this).next().attr('pid');
+                var $index = $(this).attr('pindex');
+
+                $('.pop_main select[name=article] option[value='+$aId+']').prop('selected', 'selected');
+                $('#pop_pro_id').val($pId);
+                $('.index').val($index);
+                $('.pop_con').show();
+            });
+
+            // 打印图片信息
+            /*$('#show_img').click(function () {
+                var image = $('#pro_img');
+                console.log(image[0].files[0]);
+            });*/
+
+
+        });
+    </script>
+{% endblock topfile %}
+{% load my_filters %}
+{% block center_main %}
+    <div class="center_main clearfix">
+        <h3 class="clearfix"><span>轮播图管理</span></h3>
+        <button class="btn btn-primary pull-left" style="margin-bottom: 20px" id="create_promotion">添加轮播图</button>
+        {% csrf_token %}
+        <table class="table">
+            <tr>
+                <th>序号</th>
+                <th>文章</th>
+                <th>图片</th>
+                <th>索引</th>
+            </tr>
+            {% for promotion in promotions %}
+            <tr>
+                <td>{{ forloop.counter|double }}</td>
+                <td class="td_article_title">{{ promotion.article.title }}</td>
+                <td class="td_image"><img src="{{ promotion.image.url }}" alt="轮播图"></td>
+                <td>
+                    <button class="btn btn-primary promotion_edit" pindex="{{ promotion.index }}" aid="{{ promotion.article.id }}">编辑</button>
+                    <button class="btn btn-danger promotion_del" pid="{{ promotion.id }}">删除</button>
+                </td>
+            </tr>
+            {% empty %}
+                <tr><td colspan="4">暂时没有轮播图</td></tr>
+            {% endfor %}
+
+        </table>
+    </div>
+
+    {# 弹窗 #}
+    <div class="pop_con">
+        <div class="mask"></div>
+        <div class="pop_main container">
+            <h3><span>新建/编辑轮播图</span></h3>
+            <div class="form-group">
+                <label for="">文章</label>
+                <select name="article" id="" class="form-control">
+                    {% for article in articles %}
+                        <option value="{{ article.id }}">{{ article.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="">图片</label>
+                <input type="file" name="pro_img" id="pro_img">
+            </div>
+            <div class="form-group clearfix">
+                <label for="" class="index_label">索引</label>
+                <input type="text" class="form-control index">
+            </div>
+            <input type="hidden" id="pop_pro_id" value="-1">
+            <button class="exit btn btn-danger"><span class="glyphicon glyphicon-remove"></span></button>
+            <button class="btn btn-primary" id="pop_submit_btn">提交</button>
+{#            <button id="show_img">显示图片信息</button>#}
+        </div>
+    </div>
+
+{% endblock center_main %}

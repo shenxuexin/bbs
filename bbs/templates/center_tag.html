@@ -1,0 +1,149 @@
+{% extends 'base_center.html' %}
+{% block topfile %}
+    <script>
+        $(function () {
+            // 删除
+            $('.tag_del').click(function () {
+                var $tid = $(this).attr('tid');
+                var send_data = {
+                    'tid': $tid,
+                    'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+                };
+
+                $.post('/del_tag', send_data, function (result) {
+                    if(result.code === 4)
+                    {
+                        alert('删除成功!');
+                        window.location.reload();
+                    }
+                    else
+                    {
+                        alert(result.errmsg);
+                    }
+                });
+            });
+
+            // 弹出弹框
+            $('#create_tag').click(function () {
+                $('.pop_main input[name=tag_name]').val('');
+                $('.pop_main textarea[name=desc]').val('');
+                $('#pop_tag_id').val('-1');
+                $('.pop_con').show();
+            });
+
+            //关闭弹窗
+            $('.exit').click(function () {
+                $('.pop_con').hide();
+            });
+
+            $('.pop_con').click(function () {
+                $('.pop_con').hide();
+            });
+
+            // 阻止事件冒泡
+            $('.pop_main').click(function () {
+                return false;
+            });
+
+            // 创建/编辑分类
+            $('#pop_submit_btn').click(function () {
+                var $tagName = $('.pop_main input[name=tag_name]').val();
+                var $tagDesc = $('.pop_main textarea[name=desc]').val();
+                var $tagId = $('#pop_tag_id').val();
+                var send_data = {
+                    'tag_name': $tagName,
+                    'tag_desc': $tagDesc,
+                    'tag_id': $tagId,
+                    'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+                };
+
+                // 新建标签
+                var requestUrl = '/create_tag';
+
+                if($('#pop_tag_id').val() !== '-1')
+                {
+                    // 编辑标签
+                    requestUrl = '/edit_tag';
+                }
+
+                $.post(requestUrl, send_data, function (result) {
+                    if(result.code === 5)
+                    {
+                        //成功
+                        $('.pop_con').hide();
+                        window.location.reload();
+                    }
+                    else
+                    {
+                        alert(result.errmsg);
+                    }
+                });
+
+            });
+
+            // 显示编辑
+            $('.tag_edit').click(function () {
+                var $tagName = $(this).parent().siblings('.td_tag_name').text();
+                var $tagDesc = $(this).parent().siblings('.td_tag_desc').text();
+                var $tagId = $(this).next().attr('tid');
+
+                $('.pop_main input[name=tag_name]').val($tagName);
+                $('.pop_main textarea[name=desc]').val($tagDesc);
+                $('#pop_tag_id').val($tagId);
+                $('.pop_con').show();
+            });
+
+
+        });
+    </script>
+{% endblock topfile %}
+{% load my_filters %}
+{% block center_main %}
+    <div class="center_main clearfix">
+        <h3 class="clearfix"><span>标签管理</span></h3>
+        <button class="btn btn-primary pull-left" style="margin-bottom: 20px" id="create_tag">新增标签</button>
+        {% csrf_token %}
+        <table class="table">
+            <tr>
+                <th>序号</th>
+                <th>标签名</th>
+                <th>描述</th>
+                <th>操作</th>
+            </tr>
+            {% for tag in tags %}
+            <tr>
+                <td>{{ forloop.counter|double }}</td>
+                <td class="td_tag_name">{{ tag.name }}</td>
+                <td class="td_tag_desc">{{ tag.desc }}</td>
+                <td>
+                    <button class="btn btn-primary tag_edit">编辑</button>
+                    <button class="btn btn-danger tag_del" tid="{{ tag.id }}">删除</button>
+                </td>
+            </tr>
+            {% empty %}
+                <tr><td colspan="4">暂时没有标签</td></tr>
+            {% endfor %}
+
+        </table>
+    </div>
+
+    {# 弹窗 #}
+    <div class="pop_con">
+        <div class="mask"></div>
+        <div class="pop_main container">
+            <h3><span>新建/编辑标签</span></h3>
+            <div class="form-group">
+                <label for="">标签名</label>
+                <input type="text" class="form-control" name="tag_name">
+            </div>
+            <div class="form-group">
+                <label for="">简介</label>
+                <textarea name="desc" id="" cols="30" rows="10" class="form-control"></textarea>
+            </div>
+            <input type="hidden" id="pop_tag_id" value="-1">
+            <button class="exit btn btn-danger"><span class="glyphicon glyphicon-remove"></span></button>
+            <button class="btn btn-primary" id="pop_submit_btn">提交</button>
+        </div>
+    </div>
+
+{% endblock center_main %}

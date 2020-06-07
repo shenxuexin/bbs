@@ -1,0 +1,25 @@
+{% extends 'base_main.html' %}
+{% block title %}个人博客-个人中心{% endblock title %}
+{% block main %}
+    <div class="container">
+        <div class="row">
+            <div class="menu_con col-lg-2">
+{#                <div class="center_menu">#}
+{#                    <h3>博客管理</h3>#}
+                    <div class="list-group">
+                        <a href="{% url 'my_bbs:article_manage' %}" class="list-group-item {% if active_sort == 'article' %}active{% endif %}">文章管理</a>
+                        <a href="{% url 'my_bbs:sort_manage' %}" class="list-group-item {% if active_sort == 'sort' %}active{% endif %}">分类管理</a>
+                        <a href="{% url 'my_bbs:tag_manage' %}" class="list-group-item {% if active_sort == 'tag' %}active{% endif %}">标签管理</a>
+                        <a href="{% url 'my_bbs:comment_manage' %}" class="list-group-item {% if active_sort == 'comment' %}active{% endif %}">评论管理</a>
+                        <a href="{% url 'my_bbs:promotion_manage' %}" class="list-group-item {% if active_sort == 'promotion' %}active{% endif %}">轮播图</a>
+                    </div>
+{#                </div>#}
+
+            </div>
+            <div class="center_main_con col-lg-10">
+                {% block center_main %}{% endblock center_main %}
+            </div>
+        </div>
+    </div>
+{% endblock main %}
+

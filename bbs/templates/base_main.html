@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{# 主页,列表页,详情页 #}
+{% load my_filters %}
+{% load staticfiles %}
+{% block body %}
+    {# 菜单栏 #}
+    <nav class="navbar navbar-default navbar-static-top navbar-inverse">
+      <div class="container">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="{% url 'my_bbs:index' %}">沈</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav">
+              <li {% if page == 'index' %}class="active"{% endif %}><a href="{% url 'my_bbs:index' %}">首页</a></li>
+              {% for sort in sorts|get_sorts %}
+                  {% if sort.child_sorts %}
+                      <li {% if sort.name == sort_parent %}class="dropdown active" {% else %}class="dropdown"{% endif %}>
+                          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ sort.name }} <span class="caret"></span></a>
+                          <ul class="dropdown-menu">
+                              {% for child_sort in sort.child_sorts %}
+                                  <li  {% if page == child_sort.name %}class="active"{% endif %}><a href="{% url 'my_bbs:sort_list' child_sort.id %}">{{ child_sort.name }}</a></li>
+                              {% endfor %}
+                          </ul>
+                      </li>
+                  {% else %}
+                      <li  {% if page == sort.name %}class="active"{% endif %}><a href="{% url 'my_bbs:sort_list' sort.id %}">{{ sort.name }}</a></li>
+                  {% endif %}
+              {% endfor %}
+              {% if user.is_authenticated %}
+                  {% if user.username == 'shenxuexin' %}
+                      <li {% if page == 'center' %}class="active" {% endif %}><a href="{% url 'my_bbs:article_manage' %}">个人中心</a></li>
+                  {% else %}
+                      <li><a>{{ user.username }}</a></li>
+                  {% endif %}
+                  <li id="is_login"><a href="{% url 'my_bbs:logout' %}?next={{ cur_path }}">登出</a></li>
+              {% else %}
+                  <li><a href="{% url 'my_bbs:login' %}?next={{ cur_path }}">登录</a></li>
+              {% endif %}
+          </ul>
+          <form class="navbar-form navbar-right" action="/search" method="get">
+            <div class="form-group" >
+                <div class="input-group">
+                        <input type="text" class="form-control" placeholder="搜索文章" name="q">
+                        <div class="input-group-btn">
+                            <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-search"></span></button>
+                        </div>
+                </div>
+            </div>
+          </form>
+        </div><!-- /.navbar-collapse -->
+      </div><!-- /.container-fluid -->
+    </nav>
+
+    {# 主体部分 #}
+    {% block main %}
+    <div class="container">
+        <div class="row">
+            <div class="main_con col-lg-8">
+                {# 幻灯片 #}
+                {% block slide %}{% endblock slide %}
+                {# 路径导航 #}
+                {% block breadcrumb %}{% endblock breadcrumb %}
+                {# 文章 #}
+                {% block article %}{% endblock article %}
+            </div>
+            <ul class="side_con col-lg-4">
+                {# 标签 #}
+                {% block tag %}
+                    <ul class="tag">
+                        <h3>文章标签</h3>
+                        {% for tag in tags|get_tags %}
+                            <li><a href="{% url 'my_bbs:tag_list' tag.id %}">{{ tag.name }}</a></li>
+                        {% endfor %}
+                    </ul>
+                {% endblock tag %}
+                {# 日期归档 #}
+                {% block date %}
+                    <ul class="date">
+                        <h3>日期归档</h3>
+                        {% for date in date_list|get_dates %}
+                            <li><a href="{% url 'my_bbs:date_list' date.date_ym %}">{{ date.date_ym }}({{ date.num_article }})</a></li>
+                        {% empty %}
+                            <li>暂时没有文章</li>
+                        {% endfor %}
+                    </ul>
+                {% endblock date %}
+            </div>
+        </div>
+    </div>
+    {% endblock main %}
+
+    {# 底部版权信息 #}
+    <div class="container-fluid bottom">
+        <p>版权所有@www.shenxuexin.cn</p>
+    </div>
+{% endblock body %}

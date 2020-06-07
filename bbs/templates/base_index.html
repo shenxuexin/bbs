@@ -1,0 +1,140 @@
+{% extends 'base_main.html' %}
+{% load staticfiles %}
+{% block title %}个人博客-首页{% endblock title %}
+{% block topfile %}
+    <script type="text/javascript" src="{% static 'js/swiper.jquery.min.js' %}"></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/swiper-3.4.2.min.css' %}">
+    <script>
+        $(function () {
+            var swiper = new Swiper('.swiper-container', {
+                pagination: '.swiper-pagination',
+                direction : 'horizontal',
+                prevButton: '.swiper-button-prev',
+                nextButton: '.swiper-button-next',
+                initialSlide :1,
+                paginationClickable: true,
+                loop: true,
+                autoplay:3000,
+                autoplayDisableOnInteraction:false
+            });
+        });
+    </script>
+{% endblock topfile %}
+{% block slide %}
+    {# 幻灯片 #}
+    <div class="slide">
+        <div class="swiper-container">
+          <div class="swiper-wrapper">
+              {% for promotion in promotions %}
+                  <div class="swiper-slide"><a href="{% url 'my_bbs:detail' promotion.article.id %}"><img src="{{ promotion.image.url }}" alt="幻灯片图像"></a></div>
+              {% endfor %}
+          </div>
+            <div class="swiper-pagination"></div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
+        </div>
+    </div>
+{% endblock slide %}
+{% block article %}
+    {% block keyword %}{% endblock keyword %}
+    {# 文章 #}
+    {% for article in articles %}
+    <div class="article">
+        <div class="article_header">
+            <span class="article_tag">{{ article.sort.name }}</span>
+            <h3 class="article_title"><a href="{% url 'my_bbs:detail' article.id %}">{{ article.title }}</a></h3>
+        </div>
+        <div class="article_main">
+            <a href="{% url 'my_bbs:detail' article.id %}" class="thumbnail article_cover hidden-xs hidden-sm">
+                  <img src="{{ article.image.url }}" alt="缩略图">
+            </a>
+            <p class="desc">{{ article.desc }}</p>
+        </div>
+        <div class="article_info hidden-xs hidden-sm">
+            <div class="author pull-right">
+                <span class="glyphicon glyphicon-user"></span>
+                <span>{{ article.author.username }}</span>
+            </div>
+            <div class="comment pull-right">
+                <span class="glyphicon glyphicon-comment"></span>
+                <span>{{ article.comment_num }}</span>
+            </div>
+            <div class="up pull-right">
+                <span class="glyphicon glyphicon-heart"></span>
+                <span>{{ article.up_num }}</span>
+            </div>
+            <div class="read pull-right">
+                <span class="glyphicon glyphicon-eye-open"></span>
+                <span>{{ article.read_num }}</span>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+        <div  class="article" style="height: auto; padding: 20px">
+            暂时没有文章
+        </div>
+    {% endfor %}
+
+    {# 分页 #}
+    <nav aria-label="Page navigation" style="text-align: center">
+      <ul class="pagination">
+        {% if articles.has_previous %}
+          <li>
+                {% if link_type == 'index' %}
+                    <a href="{% url 'my_bbs:index' %}?page={{ articles.previous_page_number }}" aria-label="Previous">
+                  {% elif link_type == 'tag' %}
+                    <a href="{% url 'my_bbs:tag_list' tag.id %}?page={{ articles.previous_page_number }}" aria-label="Previous">
+                {% elif link_type == 'sort' %}
+                    <a href="{% url 'my_bbs:sort_list' sort_id %}?page={{ articles.previous_page_number }}" aria-label="Previous">
+                  {% elif link_type == 'date' %}
+                    <a href="{% url 'my_bbs:date_list' date %}?page={{ articles.previous_page_number }}" aria-label="Previous">
+                  {% endif %}
+                <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+        {% else %}
+            <li class="disabled">
+                <span aria-hidden="true">&laquo;</span>
+            </li>
+        {% endif %}
+
+          {% for pindex in page_range %}
+              {% if pindex == articles.number %}
+                  <li class="active"><a>{{ pindex }}</a></li>
+              {% else %}
+                  {% if link_type == 'index' %}
+                      <li><a href="{% url 'my_bbs:index' %}?page={{ pindex }}">{{ pindex }}</a></li>
+                  {% elif link_type == 'tag' %}
+                      <li><a href="{% url 'my_bbs:tag_list' tag.id  %}?page={{ pindex }}">{{ pindex }}</a></li>
+                  {% elif link_type == 'sort' %}
+                      <li><a href="{% url 'my_bbs:sort_list' sort_id %}?page={{ pindex }}">{{ pindex }}</a></li>
+                  {% elif link_type == 'date' %}
+                      <li><a href="{% url 'my_bbs:date_list' date %}?page={{ pindex }}">{{ pindex }}</a></li>
+                  {% endif %}
+              {% endif %}
+          {% endfor %}
+
+        {% if articles.has_next %}
+            <li>
+                {% if link_type == 'index' %}
+                    <a href="{% url 'my_bbs:index' %}?page={{ articles.next_page_number }}" aria-label="Next">
+                {% elif link_type == 'tag' %}
+                    <a href="{% url 'my_bbs:tag_list' tag.id %}?page={{ articles.next_page_number }}" aria-label="Next">
+                {% elif link_type == 'sort' %}
+                    <a href="{% url 'my_bbs:sort_list' sort_id %}?page={{ articles.next_page_number }}" aria-label="Next">
+                {% elif link_type == 'date' %}
+                    <a href="{% url 'my_bbs:date_list' date %}?page={{ articles.next_page_number }}" aria-label="Next">
+                {% endif %}
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+        {% else %}
+            <li class="disabled">
+                <span aria-hidden="true">&raquo;</span>
+            </li>
+        {% endif %}
+
+
+      </ul>
+    </nav>
+{% endblock article %}

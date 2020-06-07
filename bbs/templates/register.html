@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}个人博客-注册{% endblock title %}
+{% block topfile %}
+    <script>
+        $(function () {
+            $('#register_form').submit(function () {
+                var $username = $('input[name=username]').val();
+                var $pwd = $('input[name=pwd]').val();
+                var $email = $('input[name=email]').val();
+
+                // 不允许特殊字符,不以字母开头, 长度为4及以上
+                var re_user = /^[^!@#%\^&*\$\(\)\\/ \d][^!@#%\^&*\$\(\)\\/ ]{3,}$/;
+
+                // 以字母开头，长度在6~18之间，只能包含字母、数字和下划线
+                var re_pwd = /^[a-zA-Z]\w{5,17}$/;
+
+                // 邮箱
+                var re_email = /^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
+
+                // 校验数据
+                var err_msg = $('.errmsg');
+                if($username === "" || $pwd === "" || $email === "")
+                {
+                    err_msg.text('必填项不能为空!');
+                    err_msg.show();
+                    return false;
+                }
+
+                if(!re_user.test($username))
+                {
+                    err_msg.text('用户名格式错误!');
+                    err_msg.show();
+                    return false;
+                }
+
+                if(!re_pwd.test($pwd))
+                {
+                    err_msg.text('密码格式错误!');
+                    err_msg.show();
+                    return false;
+                }
+
+                if(!re_email.test($email))
+                {
+                    err_msg.text('邮箱格式错误!');
+                    err_msg.show();
+                    return false;
+                }
+
+                return true;
+            });
+
+            $('input').focus(function () {
+                $('.errmsg').hide();
+            });
+
+        });
+    </script>
+{% endblock topfile %}
+{% block body %}
+    <div class="container">
+        <div class="register_con col-lg-4 col-lg-offset-4 col-md-6 col-md-offset-3 col-sm-8 col-sm-offset-2">
+            <form action="" method="post" id="register_form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="">用户名: </label>
+                    <input type="text" class="form-control" name="username">
+                </div>
+                <div class="form-group">
+                    <label for="">密码: </label>
+                    <input type="password" id="" class="form-control" name="pwd">
+                </div>
+                <div class="form-group">
+                    <label for="">邮箱: </label>
+                    <input type="text" class="form-control" name="email">
+                </div>
+                <div class="form-group">
+                    <a href="{% url 'my_bbs:login' %}"><span class="glyphicon glyphicon-arrow-right"></span>去登录</a>
+                </div>
+                <input type="submit" value="注册" class="form-control btn btn-primary">
+                <div class="errmsg">{{ errmsg }}</div>
+            </form>
+        </div>
+    </div>
+{% endblock body %}

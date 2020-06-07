@@ -1,0 +1,174 @@
+{% extends 'base_center.html' %}
+{% block topfile %}
+    <script>
+        $(function () {
+            //删除分类
+            $('.sort_del').click(function () {
+                var $sid = $(this).attr('sid');
+                var send_data = {
+                    'sid': $sid,
+                    'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+                };
+
+                $.post('/del_sort', send_data, function (result) {
+                    if(result.code === 4)
+                    {
+                        alert('删除成功!');
+                        window.location.reload();
+                    }
+                    else
+                    {
+                        alert(result.errmsg);
+                    }
+                });
+            });
+
+            //弹出弹框
+            $('#create_sort').click(function () {
+                $('.pop_main input[name=sort_name]').val('');
+                $('.pop_main textarea[name=desc]').val('');
+                $('.pop_main option[value=-1]').prop('selected', 'selected');
+                $('#pop_sort_id').val('-1');
+                $('.pop_con').show();
+            });
+
+            //关闭弹窗
+            $('.exit').click(function () {
+                $('.pop_con').hide();
+            });
+
+            $('.pop_con').click(function () {
+                $('.pop_con').hide();
+            });
+
+            // 阻止事件冒泡
+            $('.pop_main').click(function () {
+                return false;
+            });
+
+            // 创建/编辑分类
+            $('#pop_submit_btn').click(function () {
+                var $sortName = $('.pop_main input[name=sort_name]').val();
+                var $sortDesc = $('.pop_main textarea[name=desc]').val();
+                var $parentId = $('.pop_con select[name=parent]').val();
+                var $sortId = $('#pop_sort_id').val();
+                var send_data = {
+                    'sort_name': $sortName,
+                    'sort_desc': $sortDesc,
+                    'parent_id': $parentId,
+                    'sort_id': $sortId,
+                    'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+                };
+
+                if($('#pop_sort_id').val() === '-1')
+                {
+                    // 创建新分类
+                    $.post('/create_sort', send_data, function (result) {
+                        if(result.code === 5)
+                        {
+                            //成功
+                            $('.pop_con').hide();
+                            window.location.reload();
+                        }
+                        else
+                        {
+                            alert(result.errmsg);
+                        }
+                    });
+                }
+                else
+                {
+                    // 编辑分类
+                    $.post('/edit_sort', send_data, function (result) {
+                        if(result.code === 6)
+                        {
+                            $('.pop_con').hide();
+                            window.location.reload();
+                        }
+                        else
+                        {
+                            alert(result.errmsg);
+                        }
+                    });
+                }
+
+            });
+
+            // 显示编辑
+            $('.sort_edit').click(function () {
+                var $sortName = $(this).parent().siblings('.td_sort_name').text();
+                var $sortDesc = $(this).parent().siblings('.td_sort_desc').text();
+                var $parentId = $(this).parent().siblings('.td_parent_id').val();
+                var $sortId = $(this).next().attr('sid');
+
+                $('.pop_main input[name=sort_name]').val($sortName);
+                $('.pop_main textarea[name=desc]').val($sortDesc);
+                $('.pop_main option[value='+$parentId+']').prop('selected', 'selected');
+                $('#pop_sort_id').val($sortId);
+                $('.pop_con').show();
+            });
+
+        });
+    </script>
+{% endblock topfile %}
+{% load my_filters %}
+{% block center_main %}
+    <div class="center_main clearfix">
+        <h3 class="clearfix"><span>分类管理</span></h3>
+        {% csrf_token %}
+        <button class="btn btn-primary pull-left" style="margin-bottom: 20px" id="create_sort">新增分类</button>
+        <table class="table">
+            <tr>
+                <th>序号</th>
+                <th>分类名</th>
+                <th>描述</th>
+                <th>操作</th>
+            </tr>
+            {% for sort in all_sorts%}
+                <tr>
+                    <td>{{ forloop.counter|double }}</td>
+                    <td class="td_sort_name">{{ sort.name }}</td>
+                    <td class="td_sort_desc">{{ sort.desc }}</td>
+                    <input type="hidden" value="{{ sort.parent.id|default:-1 }}" class="td_parent_id">
+                    <td>
+                        <button class="btn btn-primary sort_edit">编辑</button>
+                        <button class="btn btn-danger sort_del" sid="{{ sort.id }}">删除</button>
+                    </td>
+                </tr>
+            {% empty %}
+                <td>暂时没有分类</td>
+            {% endfor %}
+
+        </table>
+
+    </div>
+
+    {# 弹窗 #}
+    <div class="pop_con">
+        <div class="mask"></div>
+        <div class="pop_main container">
+            <h3><span>新建/编辑分类</span></h3>
+            <div class="form-group">
+                <label for="">分类名</label>
+                <input type="text" class="form-control" name="sort_name">
+            </div>
+            <div class="form-group">
+                <label for="">简介</label>
+                <textarea name="desc" id="" cols="30" rows="10" class="form-control"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="">父级分类</label>
+                <select name="parent" id="" class="form-control">
+                    <option value="-1">无</option>
+                    {% for sort in sorts %}
+                        <option value="{{ sort.id }}">{{ sort.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <input type="hidden" id="pop_sort_id" value="-1">
+            <button class="exit btn btn-danger"><span class="glyphicon glyphicon-remove"></span></button>
+            <button class="btn btn-primary" id="pop_submit_btn">提交</button>
+        </div>
+    </div>
+
+{% endblock center_main %}

@@ -1,0 +1,86 @@
+{% extends 'base_center.html' %}
+{% load my_filters %}
+{% block topfile %}
+    <script>
+        $(function () {
+            // 删除文章
+            $(".article_opt .del").click(function () {
+                var $aid = $(this).attr('aid');
+                var send_data = {
+                    'a_id': $aid,
+                    'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+                };
+
+                $.post('/del_article', send_data, function (result) {
+                    if(result.code === 4)
+                    {
+                        //删除成功
+                        alert('删除成功!');
+                        window.location.reload();
+                    }
+                    else
+                    {
+                        alert(result.errmsg);
+                    }
+                });
+            });
+
+            // 按分类显示
+            $('.sort_select').change(function () {
+                window.location.href = '/center/article?sort_id='+$(this).val();
+                {#alert($(this).val());#}
+            });
+
+        });
+    </script>
+{% endblock topfile %}
+{% block center_main %}
+    <div class="center_main clearfix">
+        <h3 class="clearfix"><span>文章管理</span></h3>
+        <div class="opt clearfix">
+{#            <h4 class="opt_title pull-left">筛选</h4>#}
+            <select class="form-control pull-left sort_select">
+              <option value="-1">--分类--</option>
+                {% for sort in all_sorts %}
+                    <option {% if sort.id == sort_id %}selected{% endif %} value="{{ sort.id }}">{{ sort.name }}</option>
+                {% endfor %}
+            </select>
+            <div class="opt_search pull-left">
+                <div class="input-group">
+                    <input type="text" class="form-control">
+                    <div class="input-group-btn">
+                        <button class="btn btn-default"><span class="glyphicon glyphicon-search"></span></button>
+                    </div>
+                </div>
+            </div>
+            <a class="btn btn-primary pull-right create_article" href="{% url 'my_bbs:create_article' %}">
+                <span class="glyphicon glyphicon-plus"></span>
+                新建博文
+            </a>
+        </div>
+        {% csrf_token %}
+
+        {% for article in articles %}
+            <div class="article_list">
+                <div class="article_list_main pull-left">
+                    <div class="clearfix">
+                        <h3 class="article_title pull-left"><a href="{% url 'my_bbs:detail' article.id %}"><b>{{ forloop.counter|double }}</b>{{ article.title }}</a></h3>
+                        <span class="article_tag">{{ article.sort.name }}</span>
+                    </div>
+                    <div class="article_desc">
+                        {{ article.desc }}
+                    </div>
+                </div>
+                <div class="article_opt">
+                    <a class="btn btn-danger pull-right del" href="javascript:;" aid="{{ article.id }}">删除</a>
+                    <a class="btn btn-primary pull-right edit" href="{% url 'my_bbs:edit_article' article.id %}">编辑</a>
+                    <a class="btn btn-default pull-right read" href="{% url 'my_bbs:detail' article.id %}">查看</a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="article_list">暂时没有数据</div>
+        {% endfor %}
+
+    </div>
+
+{% endblock center_main %}

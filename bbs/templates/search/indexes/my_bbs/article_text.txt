@@ -1,0 +1,5 @@
+# 指定索引的属性
+{{object.title}}
+{{object.desc}}
+{{object.sort.name}}
+{{object.author.username}}
